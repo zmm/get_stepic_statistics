@@ -27,12 +27,12 @@ SEP = ";"
 DATE_SEP = "/"
 
 
-def google_sheets_process(sheet_url, result):
+def google_sheets_process(sheet_url, result, list):
     scope = ['https://spreadsheets.google.com/feeds']
     creds = ServiceAccountCredentials.from_json_keyfile_name('google_api_key.json', scope)
     client = gspread.authorize(creds)
 
-    sheet = client.open_by_key(sheet_url).worksheet("Users")
+    sheet = client.open_by_key(sheet_url).worksheet(list)
     index = 1
     for row in result:
         sheet.insert_row(row.replace("\n", "").split(";"), index)
@@ -185,4 +185,4 @@ if __name__ == '__main__':
     for user_key in users_to_find.keys():
         if not users_to_find[user_key]:
             print(user_key)
-    google_sheets_process(get_id().sheet, result)
+    google_sheets_process(get_id().sheet, result, sheet_list)
