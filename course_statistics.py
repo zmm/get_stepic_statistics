@@ -100,7 +100,7 @@ def transform_date(date):
 
 
 def generate_result(data):
-    return "" + str(current_user_id) + SEP + str(data["user"]) + SEP + invoke_username(str(data["user"])) + SEP + str(
+    return "" + str(data["course"]) + SEP + str(data["user"]) + SEP + invoke_username(str(data["user"])) + SEP + str(
         data["score"]) + '\n'
 
 
@@ -160,7 +160,7 @@ if __name__ == '__main__':
         response_size = len(response)
 
         for data in response:
-            current_user_id = str(data["id"])
+            current_user_id = str(data["user"])
             if users_to_find.keys().__contains__(current_user_id):
                 print("user " + current_user_id + " found")
                 temp_result = generate_result(data)
