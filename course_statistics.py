@@ -33,7 +33,11 @@ def google_sheets_process(sheet_url, result, list):
     client = gspread.authorize(creds)
 
     sheet = client.open_by_key(sheet_url).worksheet(list)
-    index = 1
+    index = 2
+    first_cell = sheet.acell('A1').value
+    if first_cell != "course_id":
+        sheet.insert_row("course_id;user_id;username;score".split(";"), 1)
+
     for row in result:
         sheet.insert_row(row.replace("\n", "").split(";"), index)
         index += 1
@@ -150,8 +154,7 @@ if __name__ == '__main__':
     for temp in read_user_ids():
         users_to_find[temp] = False
 
-    result = ["course_id;user_id;username;score" + '\n']
-
+    result = []
     while True:
         print("current page: " + str(page))
         response = invoke_grades(api_mode, course, page)
@@ -171,7 +174,7 @@ if __name__ == '__main__':
 
                 users_to_find[current_user_id] = True
             else:
-                print("user " + str(current_user_id) + " not found, skipping results")
+                print("user " + str(current_user_id) + " not in list, skipping")
         if meta["has_next"] is not True:
             break
         page += 1
