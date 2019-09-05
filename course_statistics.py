@@ -21,18 +21,36 @@ GOOGLE_SHEET_DEST = "sheet"
 GOOGLE_LIST = "--list"
 GOOGLE_LIST_DEST = "sheet_list"
 GOOGLE_SHEET_HELP = "Enter resulting google sheet url"
+CELL_RANGE = "--cell_range"
+CELL_RANGE_DEST = "cell_range"
+STEPIK_ID_SOURCE_SHEET = "--stepik_id_source_sheet"
+STEPIK_ID_SOURCE_SHEET_DEST ="stepik_id_source_sheet"
+
+
 FILENAME = "statistics"
 CSV = ".csv"
 SEP = ";"
 DATE_SEP = "/"
 
 
-def google_sheets_process(sheet_url, result, list):
+def authorize_google_sheets():
     scope = ['https://spreadsheets.google.com/feeds']
     creds = ServiceAccountCredentials.from_json_keyfile_name('google_api_key.json', scope)
-    client = gspread.authorize(creds)
+    return gspread.authorize(creds)
 
-    sheet = client.open_by_key(sheet_url).worksheet(list)
+def get_users_list(client, sheet_url, cell_range, sheet_name):
+    sheet = client.open_by_key(sheet_url).worksheet(sheet_name)
+    users = sheet.range(cell_range)
+    result = {}
+    for user in users:
+        if user.value.isdigit():
+            result[user.value] = False
+    return result
+ 
+
+def google_sheets_process(client, sheet_url, result, sheet_list):
+
+    sheet = client.open_by_key(sheet_url).worksheet(sheet_list)
     index = 2
     first_cell = sheet.acell('A1').value
     if first_cell != "course_id":
@@ -69,6 +87,12 @@ def get_id():
                         help=HELP)
     parser.add_argument(GOOGLE_LIST, type=str, required=False,
                         dest=GOOGLE_LIST_DEST,
+                        help=HELP)
+    parser.add_argument(CELL_RANGE, type=str, required=False,
+                        dest=CELL_RANGE_DEST,
+                        help=HELP)
+    parser.add_argument(STEPIK_ID_SOURCE_SHEET, type=str, required=False,
+                        dest=STEPIK_ID_SOURCE_SHEET_DEST,
                         help=HELP)
     return parser.parse_args()
 
@@ -128,6 +152,11 @@ def check_args(course, key, sheet, sheet_list):
 
 if __name__ == '__main__':
 
+
+
+    client = authorize_google_sheets()
+#    get_users_list(client, "1l1dGLnxLiL03eFZu-O1b6zrrWXubYrxbXBtBMthVy54", "E2:E85", "Form Responses 1")
+
     course = get_id().course_ID
     key = get_id().key
     sheet = get_id().sheet
@@ -150,22 +179,23 @@ if __name__ == '__main__':
     SUBMISSIONS_AMOUNT = 0
     page = 1
 
-    users_to_find = dict()
-    for temp in read_user_ids():
-        users_to_find[temp] = False
+    users_to_find = get_users_list(client, sheet, get_id().cell_range, get_id().stepik_id_source_sheet)
+#    for temp in read_user_ids():
+#        users_to_find[temp] = False
 
+    users_found = 0
     result = []
-    while True:
+    while users_found < len(users_to_find):
         print("current page: " + str(page))
         response = invoke_grades(api_mode, course, page)
         meta = response["meta"]
         response = response[api_mode]
         response_size = len(response)
-
         for data in response:
             current_user_id = str(data["user"])
             if users_to_find.keys().__contains__(current_user_id):
                 print("user " + current_user_id + " found")
+                users_found = users_found + 1
                 temp_result = generate_result(data)
 
                 # temp_result = u''.join(temp_result).encode('utf-8')
@@ -179,6 +209,7 @@ if __name__ == '__main__':
             break
         page += 1
 
+
     with open(FILEPATH, "w") as csv_file:
         for temp in result:
             csv_file.write(str(temp))
@@ -188,4 +219,4 @@ if __name__ == '__main__':
     for user_key in users_to_find.keys():
         if not users_to_find[user_key]:
             print(user_key)
-    google_sheets_process(get_id().sheet, result, sheet_list)
+    google_sheets_process(client, get_id().sheet, result, sheet_list)
