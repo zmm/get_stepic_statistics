@@ -49,7 +49,8 @@ def get_users_list(client, sheet_url, cell_range, sheet_name):
  
 
 def google_sheets_process(client, sheet_url, result, sheet_list):
-
+    print(sheet_url)
+    print(sheet_list)
     sheet = client.open_by_key(sheet_url).worksheet(sheet_list)
     index = 2
     first_cell = sheet.acell('A1').value
@@ -194,7 +195,7 @@ if __name__ == '__main__':
         for data in response:
             current_user_id = str(data["user"])
             if users_to_find.keys().__contains__(current_user_id):
-                print("user " + current_user_id + " found")
+#                print("user " + current_user_id + " found")
                 users_found = users_found + 1
                 temp_result = generate_result(data)
 
@@ -203,8 +204,8 @@ if __name__ == '__main__':
                 result.append(temp_result)
 
                 users_to_find[current_user_id] = True
-            else:
-                print("user " + str(current_user_id) + " not in list, skipping")
+#            else:
+#                print("user " + str(current_user_id) + " not in list, skipping")
         if meta["has_next"] is not True:
             break
         page += 1
