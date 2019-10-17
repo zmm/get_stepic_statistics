@@ -6,6 +6,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import requests
 import argparse
 import sys
+from time import sleep
 
 client_id = ""
 client_secret = ""
@@ -57,8 +58,17 @@ def google_sheets_process(client, sheet_url, result, sheet_list):
     if first_cell != "course_id":
         sheet.insert_row("course_id;user_id;username;score".split(";"), 1)
 
+    updates = 0
+
     for row in result:
-        sheet.insert_row(row.replace("\n", "").split(";"), index)
+        result_to_insert = row.replace("\n", "").split(";")        
+        for i in range(1,5):
+            sleep(1)
+            if updates % 90 == 0:
+               sleep(10)
+            sheet.update_cell(index, i, result_to_insert[i-1])
+            updates += 1
+#        sheet.insert_row(row.replace("\n", "").split(";"), index)
         index += 1
 
 
